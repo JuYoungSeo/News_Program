@@ -1,0 +1,84 @@
+
+import requests
+import re
+import MySQLdb
+from bs4 import BeautifulSoup
+
+TARGET_URL_BEFORE_PAGE_NUM = 'http://news.joins.com/money/itview/list/'
+INSIDE_URL_BEFORE_PAGE_NUM = 'http://news.joins.com'
+INSIDE_URL_BEHIND=''
+content =  ''
+data=''
+find_num = 10 # 3일경우 1~2페이지
+number=0
+behind_url_list = []
+
+con = MySQLdb.connect("114.201.35.170", "root", "cksals", "newss")
+con.set_character_set('utf8')
+cur = con.cursor(MySQLdb.cursors.DictCursor)
+
+def get_html(url): #html을 긁어오는 함수
+    _html = ''
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        _html = resp.content
+    return _html
+
+def clean_content(content): #기사를 깔끔하게 나오게 해주는 함수
+    cleaned_content = re.sub('[a-zA-Z]',"",content)
+
+    cleaned_content = re.sub('[\{\}\[\]\/?.,;:|\)<>@\#$%&\\\=\(\'|"]',
+                           "",cleaned_content) #정규식
+    cleaned_content = re.sub('\ 0',
+                          "",cleaned_content) #정규식
+    cleaned_content = re.sub('00.+?',
+                        "",cleaned_content) #정규식
+
+    return cleaned_content
+
+
+def same_word(INSIDE_URL_BEHIND): #패턴과 다른 글자 없애기
+    pattern = '/article/\d+'
+    r = re.compile(pattern)
+    result = r.findall(INSIDE_URL_BEHIND)
+    return result
+
+def str_sub(result): #중첩 없애기
+    num = 0 #result상의 num
+    for i in result:
+        num += 1
+        if(num%3==1):
+            behind_url_list.extend([i])
+
+for i in range(1,find_num):
+    for_in_url = TARGET_URL_BEFORE_PAGE_NUM+str(i)
+    html_2 = get_html(for_in_url)
+    soup_2 = BeautifulSoup(html_2,'html.parser')
+
+    for a in soup_2.find_all('a',href=True):
+        INSIDE_URL_BEHIND += a['href'] +'\n'
+
+    '''href 추출 완료 '''
+
+result = same_word(INSIDE_URL_BEHIND)
+str_sub(result)
+
+
+for i in behind_url_list: #기사를 \n단위로 끊음 or 알티클 공통 관련 기사로 끊어도 됨
+    html_inside = get_html(INSIDE_URL_BEFORE_PAGE_NUM+i)
+    soup_inside = BeautifulSoup(html_inside,'html.parser')
+    list=soup_inside.select('h1.headline.mg')
+    for item in list: #기사가 있는 div ID를 찾는다.
+        data = str(item.find_all(text=True)) #content=TRUE를 통해 텍스트 요소만 뽑아서 문자열 치환
+    for item in soup_inside.find_all('div',id='article_body'): #기사가 있는 div ID를 찾는다.
+        content = str(item.find_all(text=True)) #content=TRUE를 통해 텍스트 요소만 뽑아서 문자열 치환
+    content = clean_content(content)
+    data = clean_content(data)
+    pattern = re.compile("           ") #공백없애기
+    content = re.sub(pattern, '', content)
+    data = re.sub(pattern, '', data)
+    curs=con.cursor()
+    sql="""insert into news(title, context, good_number, search_number,idx,URL) values (%s,%s,%s,%s,%s,%s)"""
+    curs.execute(sql,(data,content,0,0,number,INSIDE_URL_BEFORE_PAGE_NUM+i))
+    number=number+1
+    con.commit()

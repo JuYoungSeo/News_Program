@@ -1,0 +1,7 @@
+﻿  TCPServer.cpp
+c:\users\lunarsjy\desktop\새 폴더 (4)\server\server\tcpserver.cpp(14): warning C4101: 'PORT' :참조되지 않은 지역 변수입니다.
+c:\users\lunarsjy\desktop\새 폴더 (4)\server\server\tcpserver.cpp(67): warning C4101: 'dwTmp' :참조되지 않은 지역 변수입니다.
+c:\users\lunarsjy\desktop\새 폴더 (4)\server\server\tcpserver.cpp(104): warning C4101: 'dwTmp' :참조되지 않은 지역 변수입니다.
+c:\users\lunarsjy\desktop\새 폴더 (4)\server\server\tcpserver.cpp(124): warning C4101: 'dwTmp' :참조되지 않은 지역 변수입니다.
+  Server.vcxproj -> C:\Users\lunarsjy\Desktop\새 폴더 (4)\Server\Debug\Server.exe
+  Server.vcxproj -> C:\Users\lunarsjy\Desktop\새 폴더 (4)\Server\Debug\Server.pdb (Partial PDB)
